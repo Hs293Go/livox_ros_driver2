@@ -94,6 +94,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/call_back/livox_lidar_callback.cpp
 )
 
+set(DISTRO_ROS $ENV{ROS_DISTRO})
 # get include directories of custom msg headers
 if(DISTRO_ROS STREQUAL "humble" OR DISTRO_ROS STREQUAL "jazzy")
   rosidl_get_typesupport_target(cpp_typesupport_target
