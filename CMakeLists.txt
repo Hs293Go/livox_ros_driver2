@@ -40,6 +40,17 @@ find_package(std_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE_save ${CMAKE_POSITION_INDEPENDENT_CODE})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+include(FetchContent)
+FetchContent_Declare(
+  livox_sdk2
+  GIT_REPOSITORY https://github.com/Livox-SDK/Livox-SDK2.git
+  GIT_TAG v1.3.1
+)
+FetchContent_MakeAvailable(livox_sdk2)
+set(CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE_save})
+
 # check apr
 find_package(PkgConfig)
 pkg_check_modules(APR apr-1)
@@ -56,14 +67,6 @@ rosidl_generate_interfaces(${LIVOX_INTERFACES}
   DEPENDENCIES builtin_interfaces std_msgs
   LIBRARY_NAME ${PROJECT_NAME}
 )
-
-## make sure the livox_lidar_sdk_shared library is installed
-find_library(LIVOX_LIDAR_SDK_LIBRARY liblivox_lidar_sdk_shared.so /usr/local/lib REQUIRED)
-
-##
-find_path(LIVOX_LIDAR_SDK_INCLUDE_DIR
-  NAMES "livox_lidar_api.h" "livox_lidar_def.h"
-  REQUIRED)
 
 ## PCL library
 link_directories(${PCL_LIBRARY_DIRS})
@@ -91,8 +94,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/call_back/livox_lidar_callback.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${livox_sdk_INCLUDE_DIRS})
-
 # get include directories of custom msg headers
 if(DISTRO_ROS STREQUAL "humble" OR DISTRO_ROS STREQUAL "jazzy")
   rosidl_get_typesupport_target(cpp_typesupport_target
@@ -108,7 +109,6 @@ endif()
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${PCL_INCLUDE_DIRS}
   ${APR_INCLUDE_DIRS}
-  ${LIVOX_LIDAR_SDK_INCLUDE_DIR}
   ${LIVOX_INTERFACES_INCLUDE_DIRECTORIES}   # for custom msgs
   3rdparty
   src
@@ -116,7 +116,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 # link libraries
 target_link_libraries(${PROJECT_NAME}
-  ${LIVOX_LIDAR_SDK_LIBRARY}
+  livox_lidar_sdk_static # Directly link the static library from the subproject
   ${LIVOX_INTERFACE_TARGET}   # for custom msgs
   ${PPT_LIBRARY}
   ${Boost_LIBRARY}

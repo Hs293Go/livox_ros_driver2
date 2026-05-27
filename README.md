@@ -47,37 +47,10 @@ git clone https://github.com/Livox-SDK/livox_ros_driver2.git ws_livox/src/livox_
 
   Be sure to clone the source code in a '[work_space]/src/' folder (as shown above), otherwise compilation errors will occur due to the compilation tool restriction.
 
-### 2.2 Build & install the Livox-SDK2
+### 2.2 Build the Livox ROS Driver 2:
 
-  **Note :**
-
-  Please follow the guidance of installation in the [Livox-SDK2/README.md](https://github.com/Livox-SDK/Livox-SDK2/blob/master/README.md)
-
-### 2.3 Build the Livox ROS Driver 2:
-
-#### For ROS (take Noetic as an example):
-```shell
-source /opt/ros/noetic/setup.sh
-./build.sh ROS1
-```
-
-#### For ROS2 Foxy:
-```shell
-source /opt/ros/foxy/setup.sh
-./build.sh ROS2
-```
-
-#### For ROS2 Humble:
-```shell
-source /opt/ros/humble/setup.sh
-./build.sh humble
-```
-
-#### For ROS2 Jazzy:
-
-```shell
-source /opt/ros/jazzy/setup.sh
-./build.sh jazzy
+``` bash
+colcon build --packages-select livox_ros_driver2
 ```
 
 ### 2.4 Run Livox ROS Driver 2:
@@ -516,18 +489,4 @@ Please check the "Global Options - Fixed Frame" field in the RViz "Display" pann
 
 ### 6.2 launch with command "ros2 launch livox_lidar_rviz_HAP_launch.py" but cannot open shared object file "liblivox_sdk_shared.so" ?
 
-Please add '/usr/local/lib' to the env LD_LIBRARY_PATH.
-
-* If you want to add to current terminal:
-
-  ```shell
-  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
-  ```
-
-* If you want to add to current user:
-
-  ```shell
-  vim ~/.bashrc
-  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
-  source ~/.bashrc
-  ```
+Likely no longer possible since we explicitly link to the Livox SDK static libraries.
