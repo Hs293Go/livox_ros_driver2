@@ -490,3 +490,7 @@ Please check the "Global Options - Fixed Frame" field in the RViz "Display" pann
 ### 6.2 launch with command "ros2 launch livox_lidar_rviz_HAP_launch.py" but cannot open shared object file "liblivox_sdk_shared.so" ?
 
 Likely no longer possible since we explicitly link to the Livox SDK static libraries.
+
+### 6.3 Is this fork only about simplifying the build system?
+
+No. Check out the `personal` branch and you can find code simplifications and very rarely optimizations.
