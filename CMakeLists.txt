@@ -47,6 +47,8 @@ FetchContent_Declare(
   livox_sdk2
   GIT_REPOSITORY https://github.com/Livox-SDK/Livox-SDK2.git
   GIT_TAG v1.3.1
+  PATCH_COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/patches/livox_sdk2.patch
+  UPDATE_DISCONNECTED 1
 )
 FetchContent_MakeAvailable(livox_sdk2)
 set(CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE_save})
