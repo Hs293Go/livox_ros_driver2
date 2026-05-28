@@ -51,14 +51,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(livox_sdk2)
 set(CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE_save})
 
-# check apr
-find_package(PkgConfig)
-pkg_check_modules(APR apr-1)
-if (APR_FOUND)
-  message(${APR_INCLUDE_DIRS})
-  message(${APR_LIBRARIES})
-endif (APR_FOUND)
-
 # generate custom msg headers
 set(LIVOX_INTERFACES livox_interfaces2)
 rosidl_generate_interfaces(${LIVOX_INTERFACES}
@@ -109,7 +101,6 @@ endif()
 # include file direcotry
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${PCL_INCLUDE_DIRS}
-  ${APR_INCLUDE_DIRS}
   ${LIVOX_INTERFACES_INCLUDE_DIRECTORIES}   # for custom msgs
   3rdparty
   src
@@ -122,7 +113,6 @@ target_link_libraries(${PROJECT_NAME}
   ${PPT_LIBRARY}
   ${Boost_LIBRARY}
   ${PCL_LIBRARIES}
-  ${APR_LIBRARIES}
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
