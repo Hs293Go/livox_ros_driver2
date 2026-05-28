@@ -25,39 +25,14 @@
 #include "parse_livox_lidar_cfg.h"
 #include <iostream>
 
+#include "simdjson.h"
+
 namespace livox_ros {
 
-bool LivoxLidarConfigParser::Parse(std::vector<UserLivoxLidarConfig> &lidar_configs) {
-  simdjson::padded_string json = simdjson::padded_string::load(path_);
+namespace {
+bool ParseExtrinsics(simdjson::ondemand::object value, ExtParameter &param);
 
-  lidar_configs.clear();
-  simdjson::ondemand::document doc;
-  simdjson::ondemand::parser parser;
-  parser.iterate(json).get(doc);
-
-  do {
-    if (auto error = parser.iterate(json).get(doc); error != simdjson::error_code{}) {
-      std::cout << "failed to parse config json:: " << simdjson::error_message(error) << "\n";
-      break;
-    }
-    simdjson::ondemand::array array;
-    if (auto res = doc["lidar_configs"].get_array().get(array); 
-        res != simdjson::error_code{} || array.count_elements() == 0) {
-      std::cout << "there is no user-defined config" << std::endl;
-      break;
-    }
-    if (!ParseUserConfigs(array, lidar_configs)) {
-      std::cout << "failed to parse basic configs" << std::endl;
-      break;
-    }
-    return true;
-  } while (false);
-
-  return false;
-}
-
-bool LivoxLidarConfigParser::ParseUserConfigs(simdjson::ondemand::array array,
-                                              std::vector<UserLivoxLidarConfig> &user_configs) {
+bool ParseUserConfigs(simdjson::ondemand::array array, std::vector<UserLivoxLidarConfig> &user_configs) {
   for (auto raw_config : array) {
     simdjson::ondemand::object config;
     if (raw_config.get(config) != simdjson::error_code{}) {
@@ -109,8 +84,7 @@ bool LivoxLidarConfigParser::ParseUserConfigs(simdjson::ondemand::array array,
   return true;
 }
 
-bool LivoxLidarConfigParser::ParseExtrinsics(simdjson::ondemand::object value,
-                                             ExtParameter &param) {
+bool ParseExtrinsics(simdjson::ondemand::object value, ExtParameter &param) {
   auto get_float_or_zero = [&value] (auto&& key) {
     if (double res = 0.0f; value[key].get(res) == simdjson::error_code{}) {
       return static_cast<float>(res);
@@ -126,6 +100,37 @@ bool LivoxLidarConfigParser::ParseExtrinsics(simdjson::ondemand::object value,
   param.z = get_float_or_zero("z");
 
   return true;
+}
+
+}  // namespace
+
+bool LivoxLidarConfigParser::Parse(std::vector<UserLivoxLidarConfig> &lidar_configs) {
+  simdjson::padded_string json = simdjson::padded_string::load(path_);
+
+  lidar_configs.clear();
+  simdjson::ondemand::document doc;
+  simdjson::ondemand::parser parser;
+  parser.iterate(json).get(doc);
+
+  do {
+    if (auto error = parser.iterate(json).get(doc); error != simdjson::error_code{}) {
+      std::cout << "failed to parse config json:: " << simdjson::error_message(error) << "\n";
+      break;
+    }
+    simdjson::ondemand::array array;
+    if (auto res = doc["lidar_configs"].get_array().get(array); 
+        res != simdjson::error_code{} || array.count_elements() == 0) {
+      std::cout << "there is no user-defined config" << std::endl;
+      break;
+    }
+    if (!ParseUserConfigs(array, lidar_configs)) {
+      std::cout << "failed to parse basic configs" << std::endl;
+      break;
+    }
+    return true;
+  } while (false);
+
+  return false;
 }
 
 } // namespace livox_ros

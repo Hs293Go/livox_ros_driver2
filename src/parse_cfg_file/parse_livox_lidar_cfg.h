@@ -25,12 +25,10 @@
 #ifndef LIVOX_ROS_DRIVER_LIVOX_LIDAR_CFG_PARSER_H_
 #define LIVOX_ROS_DRIVER_LIVOX_LIDAR_CFG_PARSER_H_
 
-#include <iostream>
 #include <string>
 #include <vector>
 
 #include "comm/comm.h"
-#include "simdjson.h"
 
 namespace livox_ros {
 
@@ -42,10 +40,6 @@ class LivoxLidarConfigParser {
   bool Parse(std::vector<UserLivoxLidarConfig>& lidar_configs);
 
  private:
-  bool ParseUserConfigs(simdjson::ondemand::array array,
-                        std::vector<UserLivoxLidarConfig>& user_configs);
-  bool ParseExtrinsics(simdjson::ondemand::object value, ExtParameter& param);
-
   const std::string path_;
 };
 
