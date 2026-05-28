@@ -65,8 +65,6 @@ using CustomPoint = livox_ros_driver2::msg::CustomPoint;
 using ImuMsg = sensor_msgs::msg::Imu;
 #endif
 
-using PointCloud = pcl::PointCloud<pcl::PointXYZI>;
-
 class DriverNode;
 
 class Lddc final {

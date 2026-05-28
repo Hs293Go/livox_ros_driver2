@@ -35,7 +35,6 @@ add_definitions(-DBUILDING_ROS2)
 # find_package(<dependency> REQUIRED)
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
-find_package(PCL REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -67,10 +66,6 @@ rosidl_generate_interfaces(${LIVOX_INTERFACES}
   DEPENDENCIES builtin_interfaces std_msgs
   LIBRARY_NAME ${PROJECT_NAME}
 )
-
-## PCL library
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
 
 # livox ros2 driver target
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -108,7 +103,6 @@ endif()
 
 # include file direcotry
 target_include_directories(${PROJECT_NAME} PUBLIC
-  ${PCL_INCLUDE_DIRS}
   ${APR_INCLUDE_DIRS}
   ${LIVOX_INTERFACES_INCLUDE_DIRECTORIES}   # for custom msgs
   3rdparty
@@ -121,7 +115,6 @@ target_link_libraries(${PROJECT_NAME}
   ${LIVOX_INTERFACE_TARGET}   # for custom msgs
   ${PPT_LIBRARY}
   ${Boost_LIBRARY}
-  ${PCL_LIBRARIES}
   ${APR_LIBRARIES}
 )
 
