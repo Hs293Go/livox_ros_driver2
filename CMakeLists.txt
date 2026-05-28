@@ -104,8 +104,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME}
   livox_lidar_sdk_static # Directly link the static library from the subproject
   ${LIVOX_INTERFACE_TARGET}   # for custom msgs
-  ${PPT_LIBRARY}
-  ${Boost_LIBRARY}
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
