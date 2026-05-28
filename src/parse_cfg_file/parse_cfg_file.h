@@ -27,10 +27,6 @@
 
 #include "../comm/comm.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/stringbuffer.h"
-
 #include <string>
 #include <vector>
 

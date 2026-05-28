@@ -38,6 +38,7 @@ ament_auto_find_build_dependencies()
 find_package(std_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(simdjson REQUIRED)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE_save ${CMAKE_POSITION_INDEPENDENT_CODE})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -103,6 +104,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # link libraries
 target_link_libraries(${PROJECT_NAME}
   livox_lidar_sdk_static # Directly link the static library from the subproject
+  simdjson::simdjson
   ${LIVOX_INTERFACE_TARGET}   # for custom msgs
 )
 

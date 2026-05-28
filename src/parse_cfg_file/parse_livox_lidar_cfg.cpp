@@ -28,79 +28,71 @@
 namespace livox_ros {
 
 bool LivoxLidarConfigParser::Parse(std::vector<UserLivoxLidarConfig> &lidar_configs) {
-  FILE* raw_file = std::fopen(path_.c_str(), "rb");
-  if (!raw_file) {
-    std::cout << "failed to open config file: " << path_ << std::endl;
-    return false;
-  }
+  simdjson::padded_string json = simdjson::padded_string::load(path_);
 
   lidar_configs.clear();
-  char read_buffer[kMaxBufferSize];
-  rapidjson::FileReadStream config_file(raw_file, read_buffer, sizeof(read_buffer));
-  rapidjson::Document doc;
+  simdjson::ondemand::document doc;
+  simdjson::ondemand::parser parser;
+  parser.iterate(json).get(doc);
 
   do {
-    if (doc.ParseStream(config_file).HasParseError()) {
-      std::cout << "failed to parse config jason" << std::endl;
+    if (auto error = parser.iterate(json).get(doc); error != simdjson::error_code{}) {
+      std::cout << "failed to parse config json:: " << simdjson::error_message(error) << "\n";
       break;
     }
-    if (!doc.HasMember("lidar_configs") ||
-        !doc["lidar_configs"].IsArray() ||
-        0 == doc["lidar_configs"].Size()) {
+    simdjson::ondemand::array array;
+    if (auto res = doc["lidar_configs"].get_array().get(array); 
+        res != simdjson::error_code{} || array.count_elements() == 0) {
       std::cout << "there is no user-defined config" << std::endl;
       break;
     }
-    if (!ParseUserConfigs(doc, lidar_configs)) {
+    if (!ParseUserConfigs(array, lidar_configs)) {
       std::cout << "failed to parse basic configs" << std::endl;
       break;
     }
     return true;
   } while (false);
 
-  std::fclose(raw_file);
   return false;
 }
 
-bool LivoxLidarConfigParser::ParseUserConfigs(const rapidjson::Document &doc,
+bool LivoxLidarConfigParser::ParseUserConfigs(simdjson::ondemand::array array,
                                               std::vector<UserLivoxLidarConfig> &user_configs) {
-  const rapidjson::Value &lidar_configs = doc["lidar_configs"];
-  for (auto &config : lidar_configs.GetArray()) {
-    if (!config.HasMember("ip")) {
+  for (auto raw_config : array) {
+    simdjson::ondemand::object config;
+    if (raw_config.get(config) != simdjson::error_code{}) {
+      continue;
+    }
+
+    std::string_view ip_string;
+    if (config["ip"].get(ip_string) != simdjson::error_code{}) {
       continue;
     }
     UserLivoxLidarConfig user_config;
 
     // parse user configs
-    user_config.handle = IpStringToNum(std::string(config["ip"].GetString()));
-    if (!config.HasMember("pcl_data_type")) {
-      user_config.pcl_data_type = -1;
-    } else {
-      user_config.pcl_data_type = static_cast<int8_t>(config["pcl_data_type"].GetInt());
+    user_config.handle = IpStringToNum(std::string(ip_string));
+    
+    if (int64_t pcl_data_type = -1; config["pcl_data_type"].get(pcl_data_type) == simdjson::error_code{}) {
+      user_config.pcl_data_type = static_cast<int8_t>(pcl_data_type);
     }
-    if (!config.HasMember("pattern_mode")) {
-      user_config.pattern_mode = -1;
-    } else {
-      user_config.pattern_mode = static_cast<int8_t>(config["pattern_mode"].GetInt());
+    if (int64_t pattern_mode = -1; config["pattern_mode"].get(pattern_mode) == simdjson::error_code{}) {
+      user_config.pattern_mode = static_cast<int8_t>(pattern_mode);
     }
-    if (!config.HasMember("blind_spot_set")) {
-      user_config.blind_spot_set = -1;
-    } else {
-      user_config.blind_spot_set = static_cast<int8_t>(config["blind_spot_set"].GetInt());
+    if (int64_t blind_spot_set = -1; config["blind_spot_set"].get(blind_spot_set) == simdjson::error_code{}) {
+      user_config.blind_spot_set = static_cast<int8_t>(blind_spot_set);
     }
-    if (!config.HasMember("dual_emit_en")) {
-      user_config.dual_emit_en = -1;
-    } else {
-      user_config.dual_emit_en = static_cast<uint8_t>(config["dual_emit_en"].GetInt());
+    if (int64_t dual_emit_en = -1; config["dual_emit_en"].get(dual_emit_en) == simdjson::error_code{}) {
+      user_config.dual_emit_en = static_cast<uint8_t>(dual_emit_en);
     }
-    if (!config.HasMember("extrinsic_parameter")) {
-      memset(&user_config.extrinsic_param, 0, sizeof(user_config.extrinsic_param));
-    } else {
-      auto &value = config["extrinsic_parameter"];
+    if (simdjson::ondemand::object value; config["extrinsic_parameter"].get(value) == simdjson::error_code{}) {
       if (!ParseExtrinsics(value, user_config.extrinsic_param)) {
         memset(&user_config.extrinsic_param, 0, sizeof(user_config.extrinsic_param));
         std::cout << "failed to parse extrinsic parameters, ip: "
                   << IpNumToString(user_config.handle) << std::endl;
       }
+    } else {
+      memset(&user_config.extrinsic_param, 0, sizeof(user_config.extrinsic_param));
     }
     user_config.set_bits = 0;
     user_config.get_bits = 0;
@@ -117,38 +109,21 @@ bool LivoxLidarConfigParser::ParseUserConfigs(const rapidjson::Document &doc,
   return true;
 }
 
-bool LivoxLidarConfigParser::ParseExtrinsics(const rapidjson::Value &value,
+bool LivoxLidarConfigParser::ParseExtrinsics(simdjson::ondemand::object value,
                                              ExtParameter &param) {
-  if (!value.HasMember("roll")) {
-    param.roll = 0.0f;
-  } else {
-    param.roll = static_cast<float>(value["roll"].GetFloat());
-  }
-  if (!value.HasMember("pitch")) {
-    param.pitch = 0.0f;
-  } else {
-    param.pitch = static_cast<float>(value["pitch"].GetFloat());
-  }
-  if (!value.HasMember("yaw")) {
-    param.yaw = 0.0f;
-  } else {
-    param.yaw = static_cast<float>(value["yaw"].GetFloat());
-  }
-  if (!value.HasMember("x")) {
-    param.x = 0;
-  } else {
-    param.x = static_cast<int32_t>(value["x"].GetInt());
-  }
-  if (!value.HasMember("y")) {
-    param.y = 0;
-  } else {
-    param.y = static_cast<int32_t>(value["y"].GetInt());
-  }
-  if (!value.HasMember("z")) {
-    param.z = 0;
-  } else {
-    param.z = static_cast<int32_t>(value["z"].GetInt());
-  }
+  auto get_float_or_zero = [&value] (auto&& key) {
+    if (double res = 0.0f; value[key].get(res) == simdjson::error_code{}) {
+      return static_cast<float>(res);
+    }
+    return 0.0f;
+  };
+
+  param.roll = get_float_or_zero("roll");
+  param.pitch = get_float_or_zero("pitch");
+  param.yaw = get_float_or_zero("yaw");
+  param.x = get_float_or_zero("x");
+  param.y = get_float_or_zero("y");
+  param.z = get_float_or_zero("z");
 
   return true;
 }

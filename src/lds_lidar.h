@@ -36,8 +36,6 @@
 
 #include "livox_lidar_def.h"
 
-#include "rapidjson/document.h"
-
 namespace livox_ros {
 
 class LdsLidar final : public Lds {

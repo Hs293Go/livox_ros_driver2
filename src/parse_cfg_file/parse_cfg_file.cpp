@@ -27,39 +27,34 @@
 #include <iostream>
 #include <cstdio>
 #include <arpa/inet.h>
+#include "simdjson.h"
 
 namespace livox_ros {
 
 ParseCfgFile::ParseCfgFile(const std::string& path) : path_(path) {}
 
 bool ParseCfgFile::ParseSummaryInfo(LidarSummaryInfo& lidar_summary_info) {
-  FILE* raw_file = std::fopen(path_.c_str(), "rb");
-  if (!raw_file) {
-    std::cout << "parse summary info failed, can not open file: " << path_ << std::endl;
-    return false;
-  }
+  simdjson::padded_string json = simdjson::padded_string::load(path_);
 
-  char read_buffer[kMaxBufferSize];
-  rapidjson::FileReadStream config_file(raw_file, read_buffer, sizeof(read_buffer));
-  rapidjson::Document doc;
+  simdjson::ondemand::document doc;
+  simdjson::ondemand::parser parser;
   do {
-    if (doc.ParseStream(config_file).HasParseError()) {
+    if (parser.iterate(json).get(doc) != simdjson::error_code{}) {
       break;
     }
-    if (!doc.HasMember("lidar_summary_info") || !doc["lidar_summary_info"].IsObject()) {
+    simdjson::ondemand::object object;
+    if (doc["lidar_summary_info"].get(object) != simdjson::error_code{}) {
       break;
     }
-    const rapidjson::Value &object = doc["lidar_summary_info"];
-    if (!object.HasMember("lidar_type") || !object["lidar_type"].IsUint()) {
+    uint64_t lidar_type = 0;
+    if (object["lidar_type"].get(lidar_type) != simdjson::error_code{}) {
       break;
     }
-    lidar_summary_info.lidar_type = static_cast<uint8_t>(object["lidar_type"].GetUint());
-    std::fclose(raw_file);
+    lidar_summary_info.lidar_type = static_cast<uint8_t>(lidar_type);
     return true;
   } while (false);
 
   std::cout << "parse lidar type failed." << std::endl;
-  std::fclose(raw_file);
   return false;
 }
 

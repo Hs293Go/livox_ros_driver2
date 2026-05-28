@@ -16,6 +16,7 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>rcutils</depend>
+  <depend>simdjson</depend>
   <depend>pcl_conversions</depend>
   <depend>rcl_interfaces</depend>
   <depend>libpcl-all-dev</depend>
